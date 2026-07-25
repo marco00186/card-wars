@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Adventure Time: Card Wars 3D · Ultimate Edition</title>
+<link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet" onerror="this.remove()">
+<style>
+  :root{
+    --purple-deep:#090520;
+    --purple-mid:#160c38;
+    --gold:#ffd646;
+    --gold-dark:#a9781f;
+    --pink:#ff6fae;
+    --teal:#4fd9ff;
+    --green:#7ed957;
+    --red:#ff4d5e;
+  }
+  *,*::before,*::after{
+    box-sizing:border-box;
+    touch-action:manipulation;
+    -webkit-tap-highlight-color:transparent;
+    user-select:none;
+    -webkit-user-select:none;
+    -webkit-touch-callout:none;
+  }
+  html,body{
+    margin:0;padding:0;width:100%;height:100%;overflow:hidden;
+    background:var(--purple-deep);
+    font-family:'Fredoka',Trebuchet MS,sans-serif;
+    color:#fff;
+    -webkit-font-smoothing:antialiased;
+  }
+  .display{font-family:'Luckiest Guy',Impact,cursive;letter-spacing:.5px;}
+  #app{position:relative;width:100%;height:100%;overflow:hidden;
+    background:
+      radial-gradient(circle at 20% 15%, rgba(255,111,174,.10), transparent 45%),
+      radial-gradient(circle at 80% 10%, rgba(79,217,255,.10), transparent 40%),
+      radial-gradient(circle at 50% 90%, rgba(126,217,87,.08), transparent 45%),
+      var(--purple-deep);
+  }
+  #starfield{position:absolute;inset:0;pointer-events:none;opacity:.6;}
+  .star{position:absolute;background:#fff;border-radius:50%;opacity:.5;}
+
+  .screen{position:absolute;inset:0;display:none;flex-direction:column;overflow-y:auto;}
+  .screen.active{display:flex;}
+
+  /* ---------- Gold Frame utility ---------- */
+  .gold-frame{
+    position:relative;
+    border:4px solid var(--gold);
+    border-radius:16px;
+    background:linear-gradient(180deg,#1c1140,#120a2c);
+    box-shadow:
+      0 0 0 3px var(--purple-deep),
+      0 0 0 6px var(--gold-dark),
+      0 8px 24px rgba(0,0,0,.5);
+  }
+  .gold-frame::before{
+    content:"";position:absolute;inset:6px;border:1px solid rgba(255,214,70,.35);
+    border-radius:10px;pointer-events:none;
+  }
+
+  /* ---------- Buttons ---------- */
+  .btn{
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    font-family:'Luckiest Guy',Impact,cursive;
+    font-size:1.05rem;letter-spacing:.5px;
+    color:#fff;border:none;border-radius:14px;
+    padding:16px 20px;cursor:pointer;
+    box-shadow:0 6px 0 rgba(0,0,0,.35), 0 10px 18px rgba(0,0,0,.35);
+    transform:translateY(0);
+    transition:transform .08s ease, box-shadow .08s ease;
+    width:100%;
+  }
+  .btn:active{transform:translateY(5px);box-shadow:0 1px 0 rgba(0,0,0,.35), 0 4px 8px rgba(0,0,0,.3);}
+  .btn-green{background:linear-gradient(180deg,#9bf07a,var(--green));color:#173a0c;}
+  .btn-teal{background:linear-gradient(180deg,#8fe9ff,var(--teal));color:#063542;}
+  .btn-pink{background:linear-gradient(180deg,#ffa1cb,var(--pink));color:#4a0f2c;}
+  .btn-gold{background:linear-gradient(180deg,#ffe488,var(--gold));color:#4a3405;}
+  .btn-small{padding:8px 12px;font-size:.75rem;border-radius:9px;box-shadow:0 4px 0 rgba(0,0,0,.35);width:auto;}
+  .btn-small:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.35);}
+
+  /* ---------- Splash ---------- */
+  #splash{align-items:center;justify-content:center;padding:24px;}
+  .splash-card{width:100%;max-width:420px;padding:32px 24px;text-align:center;}
+  .splash-card h1{font-size:2rem;margin:0 0 4px;color:var(--gold);text-shadow:0 3px 0 var(--gold-dark),0 6px 12px rgba(0,0,0,.5);}
+  .splash-card .subtitle{font-size:.85rem;color:var(--teal);margin:0 0 20px;letter-spacing:1px;text-transform:uppercase;}
+  .emoji-row{font-size:1.8rem;margin:16px 0;letter-spacing:6px;}
+  .splash-card .footer-tag{margin-top:18px;font-size:.7rem;opacity:.55;}
+  .splash-actions{display:flex;flex-direction:column;gap:12px;margin-top:8px;}
+
+  /* ---------- Modal (Settings) ---------- */
+  .modal-backdrop{position:fixed;inset:0;background:rgba(3,1,15,.72);z-index:50;display:none;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;}
+  .modal-backdrop.active{display:flex;}
+  .modal{width:100%;max-width:480px;padding:20px;margin:20px 0;}
+  .modal h2{font-size:1.2rem;color:var(--gold);margin:0 0 14px;text-align:center;}
+  .card-setting-row{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;background:rgba(255,255,255,.04);margin-bottom:8px;}
+  .card-setting-row .thumb{width:40px;height:40px;border-radius:8px;background:rgba(255,214,70,.12);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;overflow:hidden;}
+  .card-setting-row .thumb img{width:100%;height:100%;object-fit:cover;}
+  .card-setting-row .info{flex:1;min-width:0;}
+  .card-setting-row .info .name{font-weight:600;font-size:.82rem;}
+  .card-setting-row .info .floop{font-size:.65rem;opacity:.6;line-height:1.3;}
+  .upload-btns{display:flex;flex-direction:column;gap:4px;}
+  .upload-label{
+    font-size:.62rem;text-align:center;padding:5px 8px;border-radius:7px;cursor:pointer;
+    background:rgba(79,217,255,.18);color:var(--teal);border:1px solid rgba(79,217,255,.4);
+  }
+  .upload-label.video{background:rgba(255,111,174,.18);color:var(--pink);border-color:rgba(255,111,174,.4);}
+  .close-modal-row{margin-top:14px;}
+
+  /* ---------- Game Screen ---------- */
+  #game{padding:0;}
+  .hud{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:10px 12px;gap:8px;flex-wrap:wrap;z-index:5;
+  }
+  .plaque{
+    display:flex;flex-direction:column;align-items:center;padding:6px 12px;
+    border:2px solid var(--gold);border-radius:10px;background:rgba(9,5,32,.7);
+    min-width:64px;transition:transform .15s ease;
+  }
+  .plaque .label{font-size:.55rem;opacity:.7;letter-spacing:1px;text-transform:uppercase;}
+  .plaque .value{font-family:'Luckiest Guy',Impact,cursive;font-size:1.1rem;color:var(--gold);}
+  .plaque.flash{transform:scale(1.18);}
+  .plaque.hp .value{color:var(--red);}
+  .plaque.ap .value{color:var(--teal);}
+  .hud-icon-btn{
+    width:36px;height:36px;border-radius:50%;border:2px solid var(--gold);
+    background:rgba(9,5,32,.7);color:var(--gold);font-size:1rem;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;
+  }
+  .turn-indicator{font-size:.65rem;text-align:center;opacity:.75;padding:2px 0 6px;letter-spacing:1px;text-transform:uppercase;}
+
+  /* ---------- 3D Duel Field ---------- */
+  #field-wrap{
+    flex:1;position:relative;perspective:900px;overflow:hidden;
+    padding:0 8px;display:flex;flex-direction:column;justify-content:center;min-height:0;
+  }
+  .zone{
+    position:relative;transform-style:preserve-3d;
+    display:flex;align-items:stretch;justify-content:center;gap:6px;
+    padding:10px 4px;
+  }
+  .zone-ai{transform:rotateX(28deg);transform-origin:bottom;}
+  .zone-player{transform:rotateX(-22deg);transform-origin:top;}
+  .zone::before{
+    content:"DUEL FIELD";position:absolute;top:50%;left:50%;
+    transform:translate(-50%,-50%);font-family:'Luckiest Guy',Impact,cursive;
+    font-size:2.2rem;color:rgba(255,214,70,.05);letter-spacing:4px;
+    pointer-events:none;white-space:nowrap;
+  }
+  .horizon-line{
+    height:3px;margin:0 8px;border-radius:2px;flex-shrink:0;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent);
+    box-shadow:0 0 12px 2px rgba(255,214,70,.6);
+    position:relative;z-index:3;
+  }
+
+  .castle-col{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:4px;flex-shrink:0;width:54px;
+  }
+  .castle-icon{
+    width:48px;height:48px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;font-size:1.6rem;
+    border:2px solid var(--gold);background:radial-gradient(circle at 30% 25%, rgba(255,214,70,.25), rgba(9,5,32,.85));
+    box-shadow:0 0 14px rgba(255,214,70,.35);
+  }
+  .castle-col.enemy .castle-icon{border-color:var(--red);box-shadow:0 0 14px rgba(255,77,94,.35);}
+  .castle-label{font-size:.5rem;opacity:.7;text-transform:uppercase;letter-spacing:.5px;}
+
+  .building-slots{display:flex;flex-direction:column;gap:6px;flex-shrink:0;width:52px;}
+  .building-slots.right{order:3;}
+  .lane-row{display:flex;gap:6px;flex:1;min-width:0;}
+
+  .slot{
+    position:relative;border-radius:9px;
+    border:1.5px dashed rgba(255,214,70,.4);
+    background:repeating-linear-gradient(45deg, rgba(255,255,255,.02) 0 8px, rgba(255,255,255,.005) 8px 16px);
+    display:flex;align-items:center;justify-content:center;
+    transition:box-shadow .15s ease, border-color .15s ease;
+    overflow:hidden;
+  }
+  .slot .zone-number{position:absolute;top:2px;left:4px;font-size:.5rem;opacity:.35;}
+  .lane-row .slot{flex:1;min-height:64px;}
+  .building-slots .slot{height:52px;}
+  .slot.open-target{border-color:var(--green);box-shadow:0 0 0 2px rgba(126,217,87,.4), 0 0 14px rgba(126,217,87,.5);animation:pulseGlow 1s ease-in-out infinite;}
+  @keyframes pulseGlow{0%,100%{box-shadow:0 0 0 2px rgba(126,217,87,.4),0 0 10px rgba(126,217,87,.4);}50%{box-shadow:0 0 0 3px rgba(126,217,87,.7),0 0 18px rgba(126,217,87,.8);}}
+
+  .field-card{
+    width:100%;height:100%;border-radius:8px;border:2px solid var(--gold);
+    background:linear-gradient(180deg,#241457,#150b34);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:3px;position:relative;cursor:pointer;
+  }
+  .field-card.enemy{border-color:var(--red);}
+  .field-card .art{font-size:1.3rem;line-height:1;}
+  .field-card .art img{width:100%;height:26px;object-fit:cover;border-radius:4px;}
+  .field-card .fname{font-size:.45rem;text-align:center;line-height:1.05;margin-top:1px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .field-card .stats{display:flex;gap:5px;font-size:.5rem;margin-top:1px;font-weight:700;}
+  .field-card .stats .atk{color:var(--red);}
+  .field-card .stats .hp{color:var(--green);}
+  .field-card.frozen{filter:grayscale(.6) brightness(.75);}
+  .field-card.frozen::after{content:"❄";position:absolute;top:2px;right:2px;font-size:.6rem;}
+  .field-card.attacked-flag::after{content:"";}
+  .field-card.building{border-style:solid;}
+  .field-card.destroy-anim{animation:shatterOut .5s ease forwards;}
+  @keyframes shatterOut{
+    0%{opacity:1;transform:scale(1) rotate(0);filter:brightness(1) blur(0);}
+    60%{opacity:.6;transform:scale(.85) rotate(8deg);filter:brightness(2) blur(1px);}
+    100%{opacity:0;transform:scale(.4) rotate(20deg);filter:brightness(3) blur(4px);}
+  }
+
+  /* ---------- Hand ---------- */
+  #hand-wrap{padding:8px 8px 14px;flex-shrink:0;}
+  #hand{display:flex;gap:8px;overflow-x:auto;padding:6px 2px 4px;}
+  .hand-card{
+    flex-shrink:0;width:78px;height:104px;border-radius:10px;border:2px solid var(--gold);
+    background:linear-gradient(180deg,#241457,#150b34);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;padding:5px;
+    box-shadow:0 4px 10px rgba(0,0,0,.4);
+  }
+  .hand-card .cost-badge{
+    position:absolute;margin-top:-90px;margin-left:-64px;
+    width:20px;height:20px;border-radius:50%;background:var(--teal);color:#04303b;
+    font-family:'Luckiest Guy',Impact,cursive;font-size:.65rem;
+    display:flex;align-items:center;justify-content:center;border:1px solid #fff;
+  }
+  .hand-card .art{font-size:1.7rem;}
+  .hand-card .art img{width:44px;height:30px;object-fit:cover;border-radius:5px;}
+  .hand-card .name{font-size:.5rem;text-align:center;margin-top:3px;line-height:1.1;}
+  .hand-card .stats{display:flex;gap:6px;font-size:.55rem;font-weight:700;margin-top:2px;}
+  .hand-card .stats .atk{color:var(--red);}
+  .hand-card .stats .hp{color:var(--green);}
+  .hand-card.disabled{opacity:.4;}
+  .hand-card.selected{box-shadow:0 0 0 3px var(--green), 0 4px 10px rgba(0,0,0,.4);}
+
+  #end-turn-row{padding:0 10px 12px;flex-shrink:0;}
+
+  /* ---------- Action Menu ---------- */
+  .action-menu-backdrop{position:fixed;inset:0;background:rgba(3,1,15,.6);z-index:40;display:none;align-items:center;justify-content:center;}
+  .action-menu-backdrop.active{display:flex;}
+  .action-menu{width:240px;padding:18px;text-align:center;}
+  .action-menu h3{font-size:.95rem;color:var(--gold);margin:0 0 12px;}
+  .action-menu .btn{margin-bottom:8px;}
+
+  /* ---------- Toast ---------- */
+  #toast{
+    position:fixed;left:50%;bottom:100px;transform:translateX(-50%) translateY(20px);
+    background:rgba(9,5,32,.95);border:2px solid var(--gold);border-radius:10px;
+    padding:10px 16px;font-size:.75rem;max-width:88%;text-align:center;
+    opacity:0;pointer-events:none;transition:opacity .25s ease, transform .25s ease;z-index:60;
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* ---------- Battle Cinematic ---------- */
+  #battle-overlay{position:fixed;inset:0;background:rgba(2,1,10,.92);z-index:70;display:none;align-items:center;justify-content:center;overflow:hidden;}
+  #battle-overlay.active{display:flex;}
+  #battle-overlay.shake{animation:screenShake .35s ease;}
+  @keyframes screenShake{
+    0%,100%{transform:translate(0,0);}
+    20%{transform:translate(-6px,3px);}
+    40%{transform:translate(6px,-3px);}
+    60%{transform:translate(-4px,2px);}
+    80%{transform:translate(4px,-2px);}
+  }
+  .banner{
+    position:absolute;top:14%;font-family:'Luckiest Guy',Impact,cursive;
+    font-size:1.6rem;color:var(--gold);text-shadow:0 3px 0 var(--gold-dark),0 0 20px rgba(255,214,70,.6);
+    transform:scale(0) rotate(-8deg);
+  }
+  .banner.pop{animation:bannerPop .5s cubic-bezier(.2,1.6,.4,1) forwards;}
+  @keyframes bannerPop{0%{transform:scale(0) rotate(-8deg);opacity:0;}60%{transform:scale(1.15) rotate(2deg);opacity:1;}100%{transform:scale(1) rotate(0);opacity:1;}}
+
+  .battle-stage{position:relative;width:100%;max-width:420px;height:220px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;}
+  .combatant{width:90px;display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0;}
+  .combatant.left{transform:translateX(-140px);}
+  .combatant.right{transform:translateX(140px);}
+  .combatant.enter-left{animation:enterLeft .45s ease forwards;}
+  .combatant.enter-right{animation:enterRight .45s ease forwards;}
+  @keyframes enterLeft{to{opacity:1;transform:translateX(0);}}
+  @keyframes enterRight{to{opacity:1;transform:translateX(0);}}
+  .combatant.lunge-left{animation:lungeLeft .3s ease forwards;}
+  .combatant.lunge-right{animation:lungeRight .3s ease forwards;}
+  @keyframes lungeLeft{to{transform:translateX(38px);}}
+  @keyframes lungeRight{to{transform:translateX(-38px);}}
+  .combatant .cbox{width:74px;height:74px;border-radius:10px;border:2px solid var(--gold);background:linear-gradient(180deg,#241457,#150b34);display:flex;align-items:center;justify-content:center;font-size:2rem;overflow:hidden;}
+  .combatant .cbox img{width:100%;height:100%;object-fit:cover;}
+  .combatant .cname{font-size:.6rem;text-align:center;}
+  .combatant .atk-tag{background:var(--red);color:#3a0006;font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:8px;}
+
+  .clash-flash{position:absolute;left:50%;top:40%;width:10px;height:10px;border-radius:50%;
+    background:radial-gradient(circle, #fff, rgba(255,255,255,0) 70%);
+    transform:translate(-50%,-50%) scale(0);opacity:0;pointer-events:none;}
+  .clash-flash.burst{animation:clashBurst .4s ease forwards;}
+  @keyframes clashBurst{0%{transform:translate(-50%,-50%) scale(0);opacity:1;}60%{transform:translate(-50%,-50%) scale(18);opacity:.9;}100%{transform:translate(-50%,-50%) scale(24);opacity:0;}}
+
+  .dmg-float{position:absolute;top:35%;font-family:'Luckiest Guy',Impact,cursive;font-size:1.4rem;color:var(--red);
+    text-shadow:0 0 8px rgba(255,77,94,.8);opacity:0;}
+  .dmg-float.left{left:18%;}
+  .dmg-float.right{right:18%;}
+  .dmg-float.rise{animation:dmgRise .9s ease forwards;}
+  @keyframes dmgRise{0%{opacity:0;transform:translateY(0);}20%{opacity:1;}100%{opacity:0;transform:translateY(-50px);}}
+
+  .result-caption{position:absolute;bottom:16%;font-size:.8rem;text-align:center;padding:0 24px;color:#fff;opacity:0;max-width:360px;}
+  .result-caption.show{animation:fadeIn .3s ease forwards;}
+  @keyframes fadeIn{to{opacity:1;}}
+
+  #battle-skip{position:absolute;bottom:6%;}
+
+  /* ---------- FLOOP Cutscene ---------- */
+  #cutscene-overlay{position:fixed;inset:0;background:#000;z-index:80;display:none;align-items:center;justify-content:center;flex-direction:column;}
+  #cutscene-overlay.active{display:flex;}
+  #cutscene-video{width:100%;max-height:70vh;}
+  #cutscene-caption{color:#fff;font-size:.85rem;text-align:center;padding:14px 20px;max-width:480px;}
+  #cutscene-skip{margin-top:6px;}
+
+  /* ---------- Victory/Defeat ---------- */
+  #endscreen{align-items:center;justify-content:center;padding:24px;}
+  .end-card{width:100%;max-width:400px;padding:34px 24px;text-align:center;}
+  .end-card h1{font-size:2rem;margin:0 0 20px;}
+  .end-card.win h1{color:var(--green);text-shadow:0 3px 0 #2b5e12,0 0 22px rgba(126,217,87,.6);}
+  .end-card.lose h1{color:var(--red);text-shadow:0 3px 0 #5e0d15,0 0 22px rgba(255,77,94,.6);}
+  .end-actions{display:flex;flex-direction:column;gap:12px;margin-top:12px;}
+
+  ::-webkit-scrollbar{display:none;}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="starfield"></div>
+
+  <!-- ===================== SPLASH ===================== -->
+  <div class="screen active" id="splash">
+    <div class="gold-frame splash-card">
+      <h1 class="display">ADVENTURE TIME:<br>CARD WARS</h1>
+      <p class="subtitle">3D · Ultimate Edition</p>
+      <div class="emoji-row">⚔️🐶🎸👑</div>
+      <div class="splash-actions">
+        <button class="btn btn-green" id="btn-play">▶ PLAY NOW</button>
+        <button class="btn btn-teal" id="btn-settings">⚙ SETTINGS</button>
+      </div>
+      <p class="footer-tag">Algebraic! Deploy your deck and defend the castle.</p>
+    </div>
+  </div>
+
+  <!-- ===================== GAME ===================== -->
+  <div class="screen" id="game">
+    <div class="hud">
+      <div style="display:flex;gap:6px;">
+        <div class="plaque hp" id="plaque-enemy-hp"><span class="label">AI Castle</span><span class="value">30</span></div>
+      </div>
+      <button class="hud-icon-btn" id="btn-ingame-settings">⚙</button>
+      <div style="display:flex;gap:6px;">
+        <div class="plaque hp" id="plaque-player-hp"><span class="label">Your Castle</span><span class="value">30</span></div>
+        <div class="plaque ap" id="plaque-player-ap"><span class="label">AP</span><span class="value">3/3</span></div>
+      </div>
+    </div>
+    <div class="turn-indicator" id="turn-indicator">Turn 1 — Your Turn</div>
+
+    <div id="field-wrap">
+      <div class="zone zone-ai" id="zone-ai">
+        <div class="building-slots left" id="ai-build-left">
+          <div class="slot" data-side="ai" data-kind="building" data-idx="0"><span class="zone-number">AB1</span></div>
+          <div class="slot" data-side="ai" data-kind="building" data-idx="1"><span class="zone-number">AB2</span></div>
+        </div>
+        <div class="lane-row" id="ai-lanes">
+          <div class="slot" data-side="ai" data-kind="creature" data-idx="0"><span class="zone-number">A1</span></div>
+          <div class="slot" data-side="ai" data-kind="creature" data-idx="1"><span class="zone-number">A2</span></div>
+          <div class="slot" data-side="ai" data-kind="creature" data-idx="2"><span class="zone-number">A3</span></div>
+        </div>
+        <div class="castle-col enemy">
+          <div class="castle-icon">🏰</div>
+          <div class="castle-label">AI</div>
+        </div>
+      </div>
+
+      <div class="horizon-line"></div>
+
+      <div class="zone zone-player" id="zone-player">
+        <div class="castle-col">
+          <div class="castle-icon">🏯</div>
+          <div class="castle-label">You</div>
+        </div>
+        <div class="lane-row" id="player-lanes">
+          <div class="slot" data-side="player" data-kind="creature" data-idx="0"><span class="zone-number">P1</span></div>
+          <div class="slot" data-side="player" data-kind="creature" data-idx="1"><span class="zone-number">P2</span></div>
+          <div class="slot" data-side="player" data-kind="creature" data-idx="2"><span class="zone-number">P3</span></div>
+        </div>
+        <div class="building-slots right" id="player-build-right">
+          <div class="slot" data-side="player" data-kind="building" data-idx="0"><span class="zone-number">PB1</span></div>
+          <div class="slot" data-side="player" data-kind="building" data-idx="1"><span class="zone-number">PB2</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="hand-wrap">
+      <div id="hand"></div>
+    </div>
+    <div id="end-turn-row">
+      <button class="btn btn-pink" id="btn-end-turn">END TURN</button>
+    </div>
+  </div>
+
+  <!-- ===================== END SCREEN ===================== -->
+  <div class="screen" id="endscreen">
+    <div class="gold-frame end-card" id="end-card">
+      <h1 class="display" id="end-title">VICTORY!</h1>
+      <div class="end-actions">
+        <button class="btn btn-green" id="btn-play-again">PLAY AGAIN</button>
+        <button class="btn btn-teal" id="btn-main-menu">MAIN MENU</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== SETTINGS MODAL ===================== -->
+  <div class="modal-backdrop" id="settings-modal">
+    <div class="gold-frame modal">
+      <h2 class="display">⚙ CARD SETTINGS</h2>
+      <div id="settings-list"></div>
+      <div class="close-modal-row">
+        <button class="btn btn-gold" id="btn-close-settings">DONE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== ACTION MENU ===================== -->
+  <div class="action-menu-backdrop" id="action-menu-backdrop">
+    <div class="gold-frame action-menu">
+      <h3 class="display" id="action-menu-title">Card Name</h3>
+      <button class="btn btn-green" id="action-attack">⚔ ATTACK</button>
+      <button class="btn btn-teal" id="action-floop">✨ FLOOP</button>
+      <button class="btn btn-pink" id="action-cancel">CANCEL</button>
+    </div>
+  </div>
+
+  <!-- ===================== BATTLE OVERLAY ===================== -->
+  <div id="battle-overlay">
+    <div class="banner" id="battle-banner">BATTLE!</div>
+    <div class="battle-stage">
+      <div class="combatant left" id="combatant-left">
+        <div class="cbox" id="combatant-left-art">⚔️</div>
+        <div class="cname" id="combatant-left-name">—</div>
+        <div class="atk-tag" id="combatant-left-atk">0</div>
+      </div>
+      <div class="clash-flash" id="clash-flash"></div>
+      <div class="combatant right" id="combatant-right">
+        <div class="cbox" id="combatant-right-art">🛡️</div>
+        <div class="cname" id="combatant-right-name">—</div>
+        <div class="atk-tag" id="combatant-right-atk">0</div>
+      </div>
+      <div class="dmg-float left" id="dmg-left"></div>
+      <div class="dmg-float right" id="dmg-right"></div>
+    </div>
+    <div class="result-caption" id="result-caption"></div>
+    <button class="btn btn-gold btn-small" id="battle-skip">SKIP ▶</button>
+  </div>
+
+  <!-- ===================== FLOOP CUTSCENE ===================== -->
+  <div id="cutscene-overlay">
+    <video id="cutscene-video" autoplay playsinline></video>
+    <div id="cutscene-caption"></div>
+    <button class="btn btn-gold btn-small" id="cutscene-skip">SKIP ▶</button>
+  </div>
+
+  <div id="toast"></div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================================================
+   0. TOUCH-SAFE TAP HELPER
+============================================================ */
+let lastTapTime = 0;
+function addTap(el, handler){
+  if(!el) return;
+  let locked = false;
+  function fire(e){
+    if(locked) return;
+    locked = true;
+    setTimeout(()=>{locked=false;}, 380);
+    handler(e);
+  }
+  el.addEventListener('touchend', function(e){ e.preventDefault(); e.stopPropagation(); fire(e); }, {passive:false});
+  el.addEventListener('click', function(e){ fire(e); });
+}
+document.addEventListener('gesturestart', function(e){ e.preventDefault(); });
+document.addEventListener('touchend', function(e){
+  const now = Date.now();
+  if(now - lastTapTime < 300){ e.preventDefault(); }
+  lastTapTime = now;
+}, {passive:false});
+
+/* ============================================================
+   1. STARFIELD
+============================================================ */
+(function starfield(){
+  const field = document.getElementById('starfield');
+  const frag = document.createDocumentFragment();
+  for(let i=0;i<50;i++){
+    const s = document.createElement('div');
+    s.className='star';
+    const size = Math.random()*2+1;
+    s.style.width=size+'px';
+    s.style.height=size+'px';
+    s.style.left=Math.random()*100+'%';
+    s.style.top=Math.random()*100+'%';
+    s.style.opacity=(Math.random()*.5+.2).toFixed(2);
+    frag.appendChild(s);
+  }
+  field.appendChild(frag);
+})();
+
+/* ============================================================
+   2. CARD DEFINITIONS
+============================================================ */
+const CARD_DEFS = [
+  {name:"Husker Knight", cost:4, atk:6, hp:8, type:"Creature", emoji:"🗡️", floop:"Rage Boost: +2 ATK (permanent)"},
+  {name:"The Pig", cost:3, atk:3, hp:6, type:"Creature", emoji:"🐷", floop:"Slop Slam: 2 direct damage to enemy castle"},
+  {name:"BMO", cost:2, atk:2, hp:5, type:"Creature", emoji:"🎮", floop:"Byte Boost: +1 AP"},
+  {name:"Jake's Stretch Silo", cost:2, atk:0, hp:6, type:"Building", emoji:"🐕", floop:"Stretchy Surge: +2 AP"},
+  {name:"Finn's Sword Rack", cost:1, atk:0, hp:4, type:"Building", emoji:"🗡️", floop:"Arm the Lanes: +1 ATK to all your creatures"},
+  {name:"Ice King Minion", cost:3, atk:4, hp:4, type:"Creature", emoji:"❄️", floop:"Frost Lock: freeze a random enemy creature"},
+  {name:"Lumpy Space Princess", cost:2, atk:3, hp:3, type:"Creature", emoji:"👑", floop:"Lumpin' Blast: 1 damage to random enemy creature/castle"},
+  {name:"Marceline's Bat", cost:3, atk:4, hp:5, type:"Creature", emoji:"🦇", floop:"Vampire Drain: heal your castle +3"}
+];
+const customMedia = {}; // name -> {imgURL, videoURL}
+
+/* ============================================================
+   3. GAME STATE
+============================================================ */
+const CREATURE_LANE_COUNT = 3;
+const BUILDING_SLOT_COUNT = 2;
+const MAX_HAND = 5;
+
+let state = null;
+function freshDeck(){
+  const pool = [];
+  CARD_DEFS.forEach(def=>{
+    for(let i=0;i<4;i++) pool.push(Object.assign({}, def, {uid: Math.random().toString(36).slice(2)}));
+  });
+  return pool.sort(()=>Math.random()-.5);
+}
+function newGame(){
+  state = {
+    turn: 1,
+    myTurn: true,
+    inputLocked: false,
+    // ONE shared deck: every card is a single physical copy. Once it's
+    // drawn into a hand, deployed, or discarded, it can't also appear in
+    // the other side's hand at the same time — no more mirror-match duplicates.
+    deck: freshDeck(),
+    discard: [],
+    player: {
+      hp:30, ap:3, apMax:3, hand: [],
+      lanes: Array(CREATURE_LANE_COUNT).fill(null),
+      buildings: Array(BUILDING_SLOT_COUNT).fill(null)
+    },
+    ai: {
+      hp:30, ap:3, apMax:3,
+      lanes: Array(CREATURE_LANE_COUNT).fill(null),
+      buildings: Array(BUILDING_SLOT_COUNT).fill(null)
+    },
+    selectedHandIdx: null
+  };
+  drawTo(state.player.hand, MAX_HAND);
+  renderAll();
+}
+
+/* Draws from the single shared deck into the given hand array. If the deck
+   runs dry, the discard pile (destroyed / leftover cards) is reshuffled
+   back in so play can continue — still only one copy of each card ever
+   in circulation at a time. */
+function drawTo(hand, n){
+  while(hand.length < n){
+    if(!state.deck.length){
+      if(!state.discard.length) break;
+      state.deck = state.discard.splice(0).sort(()=>Math.random()-.5);
+    }
+    hand.push(state.deck.pop());
+  }
+}
+
+/* creature count on a side's field (hard cap enforced everywhere) */
+function creatureCount(side){
+  return side.lanes.filter(c=>c && c.type==='Creature').length;
+}
+
+/* ============================================================
+   4. RENDERING
+============================================================ */
+function flashPlaque(el){
+  el.classList.add('flash');
+  setTimeout(()=>el.classList.remove('flash'), 220);
+}
+
+function cardArtHTML(card, sizeClass){
+  const media = customMedia[card.name];
+  if(media && media.imgURL){
+    return `<img src="${media.imgURL}" alt="${card.name}">`;
+  }
+  return card.emoji;
+}
+
+function renderHUD(){
+  document.querySelector('#plaque-enemy-hp .value').textContent = Math.max(0,state.ai.hp);
+  document.querySelector('#plaque-player-hp .value').textContent = Math.max(0,state.player.hp);
+  document.querySelector('#plaque-player-ap .value').textContent = state.player.ap + '/' + state.player.apMax;
+  document.getElementById('turn-indicator').textContent = 'Turn ' + state.turn + ' — ' + (state.myTurn ? 'Your Turn' : "AI's Turn");
+}
+
+function renderSlot(slotEl, card, side){
+  slotEl.innerHTML = slotEl.querySelector('.zone-number').outerHTML;
+  if(!card) return;
+  const fc = document.createElement('div');
+  fc.className = 'field-card' + (side==='ai' ? ' enemy' : '') + (card.frozen ? ' frozen' : '') + (card.type==='Building' ? ' building' : '');
+  fc.innerHTML = `
+    <div class="art">${cardArtHTML(card)}</div>
+    <div class="fname">${card.name}</div>
+    <div class="stats">${card.type==='Creature' ? `<span class="atk">${card.atk}⚔</span><span class="hp">${card.hp}❤</span>` : `<span class="hp">${card.hp}❤</span>`}</div>
+  `;
+  addTap(fc, ()=> onFieldCardTap(side, slotEl.dataset.kind, parseInt(slotEl.dataset.idx,10)));
+  slotEl.appendChild(fc);
+}
+
+function renderField(){
+  document.querySelectorAll('#ai-lanes .slot').forEach(el=>renderSlot(el, state.ai.lanes[+el.dataset.idx], 'ai'));
+  document.querySelectorAll('#ai-build-left .slot').forEach(el=>renderSlot(el, state.ai.buildings[+el.dataset.idx], 'ai'));
+  document.querySelectorAll('#player-lanes .slot').forEach(el=>renderSlot(el, state.player.lanes[+el.dataset.idx], 'player'));
+  document.querySelectorAll('#player-build-right .slot').forEach(el=>renderSlot(el, state.player.buildings[+el.dataset.idx], 'player'));
+}
+
+function renderHand(){
+  const hand = document.getElementById('hand');
+  hand.innerHTML = '';
+  state.player.hand.forEach((card, idx)=>{
+    const el = document.createElement('div');
+    const affordable = card.cost <= state.player.ap;
+    el.className = 'hand-card' + (affordable ? '' : ' disabled') + (state.selectedHandIdx===idx ? ' selected' : '');
+    el.style.position='relative';
+    el.innerHTML = `
+      <div class="cost-badge">${card.cost}</div>
+      <div class="art">${cardArtHTML(card)}</div>
+      <div class="name">${card.name}</div>
+      <div class="stats">${card.type==='Creature' ? `<span class="atk">${card.atk}</span><span class="hp">${card.hp}</span>` : `<span class="hp">${card.hp}</span>`}</div>
+    `;
+    addTap(el, ()=> onHandCardTap(idx));
+    hand.appendChild(el);
+  });
+}
+
+function clearOpenTargets(){
+  document.querySelectorAll('.slot.open-target').forEach(s=>s.classList.remove('open-target'));
+}
+
+function renderAll(){
+  renderHUD();
+  renderField();
+  renderHand();
+}
+
+/* ============================================================
+   5. TOAST
+============================================================ */
+let toastTimer = null;
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove('show'), 2200);
+}
+
+/* ============================================================
+   6. HAND / DEPLOY LOGIC
+============================================================ */
+function onHandCardTap(idx){
+  if(!state.myTurn || state.inputLocked) return;
+  const card = state.player.hand[idx];
+  if(card.cost > state.player.ap){
+    showToast("Not enough AP for " + card.name + ".");
+    return;
+  }
+  const kind = card.type === 'Building' ? 'building' : 'creature';
+  const targetArray = kind === 'building' ? state.player.buildings : state.player.lanes;
+  const hasOpenSlot = targetArray.some(s=>s===null);
+  if(!hasOpenSlot){
+    showToast(kind === 'building' ? "No open building slot." : "Field is full — max 3 creatures.");
+    return;
+  }
+  state.selectedHandIdx = idx;
+  renderHand();
+  clearOpenTargets();
+  const selector = kind === 'building' ? '#player-build-right .slot' : '#player-lanes .slot';
+  document.querySelectorAll(selector).forEach(el=>{
+    const arrIdx = +el.dataset.idx;
+    if(targetArray[arrIdx] === null) el.classList.add('open-target');
+  });
+}
+
+function onFieldCardTap(side, kind, idx){
+  if(state.inputLocked) return;
+  if(side === 'player' && state.selectedHandIdx !== null){
+    tryDeploySelected(kind, idx);
+    return;
+  }
+  if(side === 'player' && state.myTurn){
+    openActionMenu(idx);
+  }
+}
+
+// tapping an OPEN slot (no card) also needs handling via slot itself for deploy
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.querySelectorAll('.slot').forEach(slotEl=>{
+    addTap(slotEl, (e)=>{
+      if(e.target.closest('.field-card')) return; // handled by field-card tap
+      const side = slotEl.dataset.side, kind = slotEl.dataset.kind, idx = +slotEl.dataset.idx;
+      if(side==='player' && state && state.selectedHandIdx !== null){
+        tryDeploySelected(kind, idx);
+      }
+    });
+  });
+});
+
+function tryDeploySelected(kind, idx){
+  const handIdx = state.selectedHandIdx;
+  const card = state.player.hand[handIdx];
+  if(!card) return;
+  const cardKind = card.type === 'Building' ? 'building' : 'creature';
+  if(cardKind !== kind){ return; }
+  const targetArray = kind === 'building' ? state.player.buildings : state.player.lanes;
+  if(targetArray[idx] !== null){ showToast("That slot is occupied."); return; }
+  if(card.cost > state.player.ap){ showToast("Not enough AP."); return; }
+
+  // enforce max 3 creatures on field
+  if(kind === 'creature' && creatureCount(state.player) >= CREATURE_LANE_COUNT){
+    showToast("Max 3 creatures on the field.");
+    state.selectedHandIdx = null; clearOpenTargets(); renderHand();
+    return;
+  }
+
+  state.player.ap -= card.cost;
+  card.hasAttacked = false; card.hasFlooped = false; card.frozen = false;
+  card.maxHp = card.hp;
+  targetArray[idx] = card;
+  state.player.hand.splice(handIdx,1);
+  state.selectedHandIdx = null;
+  clearOpenTargets();
+  flashPlaque(document.getElementById('plaque-player-ap'));
+  renderAll();
+  showToast(card.name + " deployed!");
+}
+
+/* ============================================================
+   7. ACTION MENU (Attack / FLOOP)
+============================================================ */
+let actionCtx = null;
+function openActionMenu(laneIdx){
+  const card = state.player.lanes[laneIdx];
+  if(!card) return;
+  actionCtx = { laneIdx };
+  document.getElementById('action-menu-title').textContent = card.name;
+  document.getElementById('action-attack').style.opacity = card.hasAttacked ? '.4' : '1';
+  document.getElementById('action-floop').style.opacity = card.hasFlooped ? '.4' : '1';
+  document.getElementById('action-menu-backdrop').classList.add('active');
+}
+function closeActionMenu(){
+  document.getElementById('action-menu-backdrop').classList.remove('active');
+  actionCtx = null;
+}
+addTap(document.getElementById('action-cancel'), closeActionMenu);
+addTap(document.getElementById('action-menu-backdrop'), (e)=>{
+  if(e.target.id === 'action-menu-backdrop') closeActionMenu();
+});
+
+addTap(document.getElementById('action-attack'), ()=>{
+  if(!actionCtx) return;
+  const card = state.player.lanes[actionCtx.laneIdx];
+  if(!card || card.hasAttacked){ closeActionMenu(); return; }
+  const laneIdx = actionCtx.laneIdx;
+  closeActionMenu();
+  performAttack('player', laneIdx);
+});
+
+addTap(document.getElementById('action-floop'), ()=>{
+  if(!actionCtx) return;
+  const card = state.player.lanes[actionCtx.laneIdx];
+  if(!card || card.hasFlooped){ closeActionMenu(); return; }
+  const laneIdx = actionCtx.laneIdx;
+  closeActionMenu();
+  performFloop('player', laneIdx);
+});
+
+/* ============================================================
+   8. FLOOP EFFECTS
+============================================================ */
+function performFloop(side, laneIdx){
+  const me = state[side];
+  const opp = side==='player' ? state.ai : state.player;
+  const card = me.lanes[laneIdx];
+  if(!card || card.hasFlooped) return;
+  card.hasFlooped = true;
+
+  let desc = card.floop;
+  switch(card.name){
+    case "Husker Knight":
+      card.atk += 2;
+      break;
+    case "The Pig":
+      opp.hp = Math.max(0, opp.hp - 2);
+      break;
+    case "BMO":
+      me.ap = Math.min(10, me.ap + 1);
+      break;
+    case "Ice King Minion": {
+      const targets = opp.lanes.map((c,i)=>c?i:null).filter(i=>i!==null);
+      if(targets.length){
+        const t = targets[Math.floor(Math.random()*targets.length)];
+        opp.lanes[t].frozen = true;
+      }
+      break;
+    }
+    case "Lumpy Space Princess": {
+      const targets = opp.lanes.map((c,i)=>c?i:null).filter(i=>i!==null);
+      if(targets.length){
+        const t = targets[Math.floor(Math.random()*targets.length)];
+        opp.lanes[t].hp -= 1;
+        if(opp.lanes[t].hp <= 0){ state.discard.push(opp.lanes[t]); opp.lanes[t] = null; }
+      } else {
+        opp.hp = Math.max(0, opp.hp - 1);
+      }
+      break;
+    }
+    case "Marceline's Bat":
+      me.hp = Math.min(30, me.hp + 3);
+      break;
+    default:
+      break;
+  }
+
+  renderAll();
+  checkGameOver();
+
+  const media = customMedia[card.name];
+  if(media && media.videoURL){
+    playCutscene(media.videoURL, card.name + ": " + desc);
+  } else {
+    showToast("✨ " + card.name + " — " + desc);
+  }
+}
+
+function playCutscene(url, caption){
+  const overlay = document.getElementById('cutscene-overlay');
+  const video = document.getElementById('cutscene-video');
+  document.getElementById('cutscene-caption').textContent = caption;
+  video.src = url;
+  overlay.classList.add('active');
+  video.currentTime = 0;
+  video.play().catch(()=>{});
+  function done(){
+    overlay.classList.remove('active');
+    video.pause();
+    video.removeEventListener('ended', done);
+  }
+  video.addEventListener('ended', done);
+  const skipBtn = document.getElementById('cutscene-skip');
+  skipBtn.onclick = done;
+  addTap(skipBtn, done);
+}
+
+/* ============================================================
+   9. BATTLE CINEMATIC
+============================================================ */
+let battleQueue = [];
+let battleRunning = false;
+
+function performAttack(side, laneIdx){
+  const me = state[side];
+  const opp = side==='player' ? state.ai : state.player;
+  const card = me.lanes[laneIdx];
+  if(!card || card.hasAttacked) return;
+  if(card.frozen){ showToast(card.name + " is frozen and can't attack!"); card.hasAttacked = true; return; }
+  card.hasAttacked = true;
+  const defender = opp.lanes[laneIdx];
+  battleQueue.push({ side, laneIdx, attacker: card, defenderSide: side==='player'?'ai':'player', defender });
+  runBattleQueue();
+}
+
+function runBattleQueue(){
+  if(battleRunning || !battleQueue.length) return;
+  battleRunning = true;
+  state.inputLocked = true;
+  const job = battleQueue.shift();
+  playBattleCinematic(job, ()=>{
+    battleRunning = false;
+    if(battleQueue.length){
+      runBattleQueue();
+    } else {
+      state.inputLocked = false;
+      renderAll();
+      checkGameOver();
+      maybeContinueAITurn();
+    }
+  });
+}
+
+function playBattleCinematic(job, onDone){
+  const overlay = document.getElementById('battle-overlay');
+  const banner = document.getElementById('battle-banner');
+  const leftArt = document.getElementById('combatant-left-art');
+  const rightArt = document.getElementById('combatant-right-art');
+  const leftName = document.getElementById('combatant-left-name');
+  const rightName = document.getElementById('combatant-right-name');
+  const leftAtk = document.getElementById('combatant-left-atk');
+  const rightAtk = document.getElementById('combatant-right-atk');
+  const leftEl = document.getElementById('combatant-left');
+  const rightEl = document.getElementById('combatant-right');
+  const flash = document.getElementById('clash-flash');
+  const dmgLeft = document.getElementById('dmg-left');
+  const dmgRight = document.getElementById('dmg-right');
+  const caption = document.getElementById('result-caption');
+
+  // reset
+  [leftEl,rightEl].forEach(el=>{
+    el.className = el.id==='combatant-left' ? 'combatant left' : 'combatant right';
+    el.style.opacity = '';
+  });
+  flash.className = 'clash-flash';
+  dmgLeft.className = 'dmg-float left';
+  dmgRight.className = 'dmg-float right';
+  dmgLeft.textContent=''; dmgRight.textContent='';
+  caption.className = 'result-caption';
+  caption.textContent = '';
+  banner.className = 'banner';
+  overlay.classList.remove('shake');
+
+  const isDirect = !job.defender;
+  banner.textContent = isDirect ? "DIRECT ATTACK!" : "BATTLE!";
+  leftArt.innerHTML = cardArtHTML(job.attacker);
+  leftName.textContent = job.attacker.name;
+  leftAtk.textContent = job.attacker.atk + ' ATK';
+
+  if(isDirect){
+    rightArt.textContent = job.defenderSide==='ai' ? '🏰' : '🏯';
+    rightName.textContent = job.defenderSide==='ai' ? "AI Castle" : "Your Castle";
+    rightAtk.textContent = '';
+  } else {
+    rightArt.innerHTML = cardArtHTML(job.defender);
+    rightName.textContent = job.defender.name;
+    rightAtk.textContent = job.defender.atk + ' ATK';
+  }
+
+  overlay.classList.add('active');
+
+  let cancelled = false;
+  let resolved = false;
+
+  function resolveNow(){
+    if(resolved) return;
+    resolved = true;
+    applyDamage();
+    setTimeout(()=>{
+      overlay.classList.remove('active');
+      skipBtn.removeEventListener('click', skipHandler);
+      onDone();
+    }, cancelled ? 0 : 350);
+  }
+
+  const skipBtn = document.getElementById('battle-skip');
+  function skipHandler(){ cancelled = true; resolveNow(); }
+  skipBtn.addEventListener('click', skipHandler);
+
+  function applyDamage(){
+    const attacker = job.attacker;
+    const oppState = job.defenderSide==='ai' ? state.ai : state.player;
+    const meState = job.defenderSide==='ai' ? state.player : state.ai;
+    let resultMsg = '';
+
+    if(!job.defender){
+      oppState.hp = Math.max(0, oppState.hp - attacker.atk);
+      resultMsg = `${attacker.name} strikes directly for ${attacker.atk} damage!`;
+      flashPlaque(document.getElementById(job.defenderSide==='ai' ? 'plaque-enemy-hp' : 'plaque-player-hp'));
+    } else {
+      const defender = job.defender;
+      defender.hp -= attacker.atk;
+      defender.destroyed = defender.hp <= 0;
+      let atkDestroyed = false;
+      if(defender.type === 'Creature'){
+        attacker.hp -= defender.atk;
+        atkDestroyed = attacker.hp <= 0;
+      }
+      resultMsg = `${attacker.name} clashes with ${defender.name}!`;
+      if(defender.destroyed) resultMsg += ` ${defender.name} is destroyed!`;
+      if(atkDestroyed) resultMsg += ` ${attacker.name} is destroyed!`;
+
+      if(defender.destroyed){ state.discard.push(defender); oppState.lanes[job.laneIdx] = null; }
+      if(atkDestroyed){ state.discard.push(attacker); meState.lanes[job.laneIdx] = null; }
+    }
+    caption.textContent = resultMsg;
+  }
+
+  if(cancelled) return;
+
+  // sequence
+  banner.classList.add('pop');
+  setTimeout(()=>{
+    if(cancelled) return;
+    leftEl.classList.add('enter-left'); leftEl.style.opacity='1';
+    rightEl.classList.add('enter-right'); rightEl.style.opacity='1';
+  }, 250);
+  setTimeout(()=>{
+    if(cancelled) return;
+    leftEl.classList.add('lunge-left');
+    rightEl.classList.add('lunge-right');
+  }, 750);
+  setTimeout(()=>{
+    if(cancelled) return;
+    flash.classList.add('burst');
+    overlay.classList.add('shake');
+    applyDamageEffects();
+  }, 1050);
+
+  function applyDamageEffects(){
+    // damage numbers shown pre-resolve, actual state applied at resolveNow via applyDamage
+    const attacker = job.attacker;
+    if(!job.defender){
+      dmgRight.textContent = '-' + attacker.atk;
+      dmgRight.classList.add('rise');
+    } else {
+      dmgRight.textContent = '-' + attacker.atk;
+      dmgRight.classList.add('rise');
+      if(job.defender.type === 'Creature'){
+        dmgLeft.textContent = '-' + job.defender.atk;
+        dmgLeft.classList.add('rise');
+      }
+    }
+  }
+
+  setTimeout(()=>{
+    if(cancelled) return;
+    resolveNow();
+    caption.classList.add('show');
+  }, 1600);
+
+  setTimeout(()=>{
+    if(!cancelled && !resolved) resolveNow();
+  }, 2200);
+}
+
+/* ============================================================
+   10. END TURN / AI TURN
+============================================================ */
+function resetPerTurnFlags(side){
+  side.lanes.forEach(c=>{ if(c){ c.hasAttacked=false; c.hasFlooped=false; c.frozen=false; } });
+  side.buildings.forEach(c=>{ if(c){ c.hasFlooped=false; } });
+}
+
+addTap(document.getElementById('btn-end-turn'), ()=>{
+  if(!state.myTurn || state.inputLocked) return;
+  state.selectedHandIdx = null; clearOpenTargets();
+  state.myTurn = false;
+  state.inputLocked = true;
+  renderAll();
+  showToast("AI is taking its turn...");
+  setTimeout(runAITurn, 600);
+});
+
+let aiAttackQueue = [];
+function runAITurn(){
+  // AI deploy phase
+  const ai = state.ai;
+  const hand = [];
+  drawTo(hand, 5); // draws from the SAME shared deck as the player — never a duplicate of a card in the player's hand/field
+  hand.sort((a,b)=>b.cost-a.cost);
+
+  for(const card of hand.slice()){
+    if(card.cost > ai.ap) continue;
+    const kind = card.type==='Building' ? 'building' : 'creature';
+    const arr = kind==='building' ? ai.buildings : ai.lanes;
+    if(kind==='creature' && creatureCount(ai) >= CREATURE_LANE_COUNT) continue;
+    const openIdx = arr.findIndex(s=>s===null);
+    if(openIdx === -1) continue;
+    ai.ap -= card.cost;
+    card.hasAttacked=false; card.hasFlooped=false; card.frozen=false; card.maxHp=card.hp;
+    arr[openIdx] = card;
+    hand.splice(hand.indexOf(card),1);
+  }
+  // any cards the AI drew but didn't deploy go to the discard pile, ready to
+  // be reshuffled back into the shared deck later — they never just vanish
+  // and they're never available to the player either.
+  state.discard.push(...hand);
+  renderAll();
+
+  // AI FLOOP phase (50% chance per creature)
+  ai.lanes.forEach((c,idx)=>{
+    if(c && !c.hasFlooped && Math.random() < 0.5){
+      performFloopSilent('ai', idx);
+    }
+  });
+  renderAll();
+  checkGameOver();
+
+  // queue attacks
+  aiAttackQueue = [];
+  ai.lanes.forEach((c,idx)=>{
+    if(c && !c.hasAttacked && !c.frozen) aiAttackQueue.push(idx);
+  });
+
+  setTimeout(runNextAIAttack, 500);
+}
+
+function performFloopSilent(side, laneIdx){
+  // same as performFloop but skip cutscene chance is same; reuse function
+  performFloop(side, laneIdx);
+}
+
+function runNextAIAttack(){
+  if(!aiAttackQueue.length){
+    endAITurn();
+    return;
+  }
+  const idx = aiAttackQueue.shift();
+  const card = state.ai.lanes[idx];
+  if(!card || card.hasAttacked || card.frozen){ runNextAIAttack(); return; }
+  card.hasAttacked = true;
+  const defender = state.player.lanes[idx];
+  battleQueue.push({ side:'ai', laneIdx: idx, attacker: card, defenderSide:'player', defender });
+  state.inputLocked = true;
+  runBattleQueueForAI();
+}
+
+function runBattleQueueForAI(){
+  if(battleRunning) return;
+  battleRunning = true;
+  const job = battleQueue.shift();
+  playBattleCinematic(job, ()=>{
+    battleRunning = false;
+    renderAll();
+    checkGameOver();
+    setTimeout(runNextAIAttack, 300);
+  });
+}
+
+function maybeContinueAITurn(){
+  // used by player's own battle queue completion; no-op if it's AI's turn logic path
+}
+
+function endAITurn(){
+  state.turn += 1;
+  state.player.apMax = Math.min(10, state.player.apMax+1);
+  state.ai.apMax = Math.min(10, state.ai.apMax+1);
+  state.player.ap = state.player.apMax;
+  state.ai.ap = state.ai.apMax;
+  resetPerTurnFlags(state.player);
+  resetPerTurnFlags(state.ai);
+  drawTo(state.player.hand, MAX_HAND);
+  state.myTurn = true;
+  state.inputLocked = false;
+  renderAll();
+  showToast("Your turn! Turn " + state.turn);
+}
+
+/* ============================================================
+   11. GAME OVER
+============================================================ */
+function checkGameOver(){
+  if(state.ai.hp <= 0){
+    showEndScreen(true);
+  } else if(state.player.hp <= 0){
+    showEndScreen(false);
+  }
+}
+function showEndScreen(won){
+  state.inputLocked = true;
+  const card = document.getElementById('end-card');
+  card.className = 'gold-frame end-card ' + (won ? 'win':'lose');
+  document.getElementById('end-title').textContent = won ? 'VICTORY!' : 'DEFEAT...';
+  showScreen('endscreen');
+}
+
+/* ============================================================
+   12. SETTINGS MODAL (custom media uploads)
+============================================================ */
+function buildSettingsList(){
+  const list = document.getElementById('settings-list');
+  list.innerHTML = '';
+  CARD_DEFS.forEach(def=>{
+    const row = document.createElement('div');
+    row.className = 'card-setting-row';
+    const media = customMedia[def.name] || {};
+    row.innerHTML = `
+      <div class="thumb">${media.imgURL ? `<img src="${media.imgURL}">` : def.emoji}</div>
+      <div class="info">
+        <div class="name">${def.name}</div>
+        <div class="floop">${def.floop}</div>
+      </div>
+      <div class="upload-btns">
+        <label class="upload-label">🖼 Image<input type="file" accept="image/*" style="display:none" data-card="${def.name}" data-kind="img"></label>
+        <label class="upload-label video">🎬 Video<input type="file" accept="video/mp4,video/*" style="display:none" data-card="${def.name}" data-kind="video"></label>
+      </div>
+    `;
+    list.appendChild(row);
+  });
+  list.querySelectorAll('input[type=file]').forEach(input=>{
+    input.addEventListener('change', (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      const name = e.target.dataset.card;
+      const kind = e.target.dataset.kind;
+      const url = URL.createObjectURL(file);
+      customMedia[name] = customMedia[name] || {};
+      if(kind==='img') customMedia[name].imgURL = url;
+      else customMedia[name].videoURL = url;
+      buildSettingsList();
+      if(state) renderAll();
+      showToast((kind==='img'?'Image':'Video') + " set for " + name + "!");
+    });
+  });
+}
+
+const settingsModal = document.getElementById('settings-modal');
+function openSettings(){ buildSettingsList(); settingsModal.classList.add('active'); }
+function closeSettings(){ settingsModal.classList.remove('active'); }
+addTap(document.getElementById('btn-settings'), openSettings);
+addTap(document.getElementById('btn-ingame-settings'), openSettings);
+addTap(document.getElementById('btn-close-settings'), closeSettings);
+addTap(settingsModal, (e)=>{ if(e.target===settingsModal) closeSettings(); });
+
+/* ============================================================
+   13. SCREEN NAV
+============================================================ */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+addTap(document.getElementById('btn-play'), ()=>{ newGame(); showScreen('game'); });
+addTap(document.getElementById('btn-play-again'), ()=>{ newGame(); showScreen('game'); });
+addTap(document.getElementById('btn-main-menu'), ()=>{ showScreen('splash'); });
+
+})();
+</script>
+</body>
+</html>
